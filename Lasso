@@ -1,0 +1,60 @@
+## 导入库
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Lasso
+import warnings
+import random
+import time
+warnings.filterwarnings('ignore')
+##  读取数据
+url = r'D:\\0_0.3CC\without_ID_0.3cc_0.7（seed100）_T.csv'
+df = pd.read_csv(url)
+scaler=StandardScaler()
+df_sc= scaler.fit_transform(df)
+df_sc = pd.DataFrame(df_sc, columns=df.columns)
+y = df_sc['TSS']
+X = df_sc.drop('TSS', axis=1) # becareful inplace= False
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=129)
+
+lasso = Lasso(alpha=10**(-1))
+model_lasso = lasso.fit(X_train, y_train)
+alpha_lasso = 10**np.linspace(-3,1,100)
+lasso = Lasso()
+coefs_lasso = []
+for i in alpha_lasso:
+    lasso.set_params(alpha = i)
+    lasso.fit(X_train, y_train)
+    coefs_lasso.append(lasso.coef_)
+plt.figure(figsize=(24,16))
+ax = plt.gca()
+ax.plot(alpha_lasso, coefs_lasso)
+ax.set_xscale('log')
+plt.axis('tight')
+
+plt.xlabel('Lambda',size = '25')
+plt.ylabel('Coefficients',size = '25')
+#plt.title('Lasso regression coefficients Vs. alpha')
+#plt.legend(df.drop('FSS',axis=1, inplace=False).columns)
+plt.axvline(model_lasso.alpha,color = "black",ls="--") 
+plt.show()
+
+lasso = Lasso(alpha=10**(-1))
+model_lasso = lasso.fit(X_train, y_train)
+coef = pd.Series(model_lasso.coef_,index=X_train.columns)
+print((coef[coef != 0]).abs().sort_values(ascending = True))
+print(X_train.columns[coef != 0])
+
+fea = X_train.columns[coef != 0]
+a = pd.DataFrame()
+a['feature'] = fea
+a['importance'] = coef.values[coef != 0]
+
+a = a.sort_values('importance',ascending = False)
+plt.figure(figsize=(12,8))
+plt.barh(a['feature'],a['importance'])
+#plt.title('the importance of features')
+plt.xlabel('coefficients',size = '15',)
+plt.show()
