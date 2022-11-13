@@ -1,0 +1,29 @@
+import pandas as pd
+from scipy.stats import ttest_ind,levene
+
+#分组
+dataFile = "D:\\0_0.3CC\without_ID_0.3cc_0.7（seed100）.csv"
+data = pd.read_csv(dataFile)
+data_a = data[data["TSS"] == 0] #选出label=0的那些行
+data_b = data[data["TSS"] == 1] #选出label=1的那些行
+data_a
+data_b
+
+#划分x和y
+x_a = data_a.iloc[:,0:-1] #0至-1列，不包括-1列
+y_a = data["TSS"]  #label列，即-1列
+x_b = data_b.iloc[:,0:-1]
+y_b = data_b["TSS"]
+print(x_a.shape,x_b.shape) #看行列数
+
+#循环t检验
+colNamesSel_t = []
+for colName in x_a.columns[:]:    #选取所有列
+    if levene(x_a[colName],x_b[colName])[1] > 0.05: #把每一列进行levene,然后选出第1列(即pvalue值)的值> 0.05 的列(即具有方差齐性即符合正态性要求)
+        if ttest_ind(x_a[colName],x_b[colName])[1] < 0.05:
+            colNamesSel_t.append(colName) #选出第1列(即pvalue值)的值< 0.05 的列，说明两个样本存在显著的差异
+    else:
+        if ttest_ind(x_a[colName],x_b[colName],equal_var=False)[1] < 0.05: #具有显著的差异
+              colNamesSel_t.append(colName)
+print(len(colNamesSel_t)) #打印出长度，看选中25列
+print(colNamesSel_t)  #看看选中的列  
